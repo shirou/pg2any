@@ -1,0 +1,8 @@
+{{- define "getter" -}}
+{{- range $ano := .anotations }}
+    {{ $ano }}
+{{- end }}
+    public {{ .type }} get{{ .func }}() {
+        return this.{{ .name }};
+    }
+{{ end }}

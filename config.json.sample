@@ -1,0 +1,23 @@
+{
+  "src": "user=postgres dbname=foo sslmode=disable password=VerySecret",
+  "generators": [
+    {
+      "type": "hibernate",
+      "output": "src/main/java/com/foo/bar/entity",
+      "templates": "templates/hibernate",
+      "package_name": "com.foo.bar.entity",
+      "ignore_tables": [
+        "flyway_schema_history"
+      ]
+    },
+    {
+      "type": "protoc",
+      "output": "src/proto",
+      "templates": "templates/protoc",
+      "target_tables": [
+        "user",
+        "company"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{{- define "setter" -}}
+{{ .constraint }}
+    public void set{{ .func }} ({{ .type }} arg) {
+        this.{{ .name }} = arg;
+    }
+{{ end }}
