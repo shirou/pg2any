@@ -67,12 +67,12 @@ func (gen *Hibernate) GetType() string {
 }
 
 func (gen *Hibernate) Build(ins InspectResult) error {
-	log.Printf("output: %s", filepath.Join(gen.root, gen.config.Output))
-	log.Printf("templates: %s", filepath.Join(gen.root, gen.config.Templates))
+	log.Printf("output: %s", filePathJoinRoot(gen.root, gen.config.Output))
+	log.Printf("templates: %s", filePathJoinRoot(gen.root, gen.config.Templates))
 	gen.ins = ins
 
 	// Load templates
-	tdir := filepath.Join(gen.root, gen.config.Templates, "*.tmpl")
+	tdir := filepath.Join(filePathJoinRoot(gen.root, gen.config.Templates), "*.tmpl")
 	t := template.Must(template.ParseGlob(tdir))
 	gen.template = t
 
@@ -84,7 +84,7 @@ func (gen *Hibernate) Build(ins InspectResult) error {
 
 		fileName := SnakeToUpperCamel(table.Name) + ".java"
 
-		file, err := os.Create(filepath.Join(gen.root, gen.config.Output, fileName))
+		file, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), fileName))
 		defer file.Close()
 		if err != nil {
 			return errors.Wrap(err, "build create file")
@@ -97,7 +97,7 @@ func (gen *Hibernate) Build(ins InspectResult) error {
 	// Build types
 	for _, typ := range gen.ins.Types {
 		fileName := SnakeToUpperCamel(typ.Name) + ".java"
-		file, err := os.Create(filepath.Join(gen.root, gen.config.Output, fileName))
+		file, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), fileName))
 		defer file.Close()
 		if err != nil {
 			return errors.Wrap(err, "build create file")
@@ -269,7 +269,7 @@ func loadHibernateConfig(root string, raw json.RawMessage) (HibernateConfig, err
 	if err := json.Unmarshal(raw, &hc); err != nil {
 		return hc, fmt.Errorf("hibernate config error: %s", err)
 	}
-	output := filepath.Join(root, hc.Output)
+	output := filePathJoinRoot(root, hc.Output)
 	if err := DirExists(output); err != nil {
 		return hc, fmt.Errorf("hibernate output is not exists: %s", hc.Output)
 	}
