@@ -28,7 +28,6 @@ func main() {
 	}
 
 	config, err := NewConfig(confFile)
-
 	if err != nil {
 		log.Fatal(fmt.Errorf("config file error: %s", err))
 	}

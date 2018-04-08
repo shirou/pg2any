@@ -31,6 +31,7 @@ type Hibernate struct {
 	config   HibernateConfig
 	ins      InspectResult
 	template *template.Template
+	root     string
 }
 
 type HibernateMember struct {
@@ -47,14 +48,15 @@ type HibernateAccessor struct {
 
 const HibernateTypeName = "hibernate"
 
-func NewHibernate(db *sql.DB, raw json.RawMessage) (Generator, error) {
-	config, err := loadHibernateConfig(raw)
+func NewHibernate(db *sql.DB, root string, raw json.RawMessage) (Generator, error) {
+	config, err := loadHibernateConfig(root, raw)
 	if err != nil {
 		return nil, err
 	}
 	ret := Hibernate{
 		db:     db,
 		config: config,
+		root:   root,
 	}
 
 	return &ret, nil
@@ -65,12 +67,12 @@ func (gen *Hibernate) GetType() string {
 }
 
 func (gen *Hibernate) Build(ins InspectResult) error {
-	log.Printf("output: %s", gen.config.Output)
-	log.Printf("templates: %s", gen.config.Templates)
+	log.Printf("output: %s", filepath.Join(gen.root, gen.config.Output))
+	log.Printf("templates: %s", filepath.Join(gen.root, gen.config.Templates))
 	gen.ins = ins
 
 	// Load templates
-	tdir := filepath.Join(gen.config.Templates, "*.tmpl")
+	tdir := filepath.Join(gen.root, gen.config.Templates, "*.tmpl")
 	t := template.Must(template.ParseGlob(tdir))
 	gen.template = t
 
@@ -82,7 +84,7 @@ func (gen *Hibernate) Build(ins InspectResult) error {
 
 		fileName := SnakeToUpperCamel(table.Name) + ".java"
 
-		file, err := os.Create(filepath.Join(gen.config.Output, fileName))
+		file, err := os.Create(filepath.Join(gen.root, gen.config.Output, fileName))
 		defer file.Close()
 		if err != nil {
 			return errors.Wrap(err, "build create file")
@@ -95,7 +97,7 @@ func (gen *Hibernate) Build(ins InspectResult) error {
 	// Build types
 	for _, typ := range gen.ins.Types {
 		fileName := SnakeToUpperCamel(typ.Name) + ".java"
-		file, err := os.Create(filepath.Join(gen.config.Output, fileName))
+		file, err := os.Create(filepath.Join(gen.root, gen.config.Output, fileName))
 		defer file.Close()
 		if err != nil {
 			return errors.Wrap(err, "build create file")
@@ -262,12 +264,13 @@ func (gen *Hibernate) convertType(col Column) string {
 	return col.DataType
 }
 
-func loadHibernateConfig(raw json.RawMessage) (HibernateConfig, error) {
+func loadHibernateConfig(root string, raw json.RawMessage) (HibernateConfig, error) {
 	var hc HibernateConfig
 	if err := json.Unmarshal(raw, &hc); err != nil {
 		return hc, fmt.Errorf("hibernate config error: %s", err)
 	}
-	if err := DirExists(hc.Output); err != nil {
+	output := filepath.Join(root, hc.Output)
+	if err := DirExists(output); err != nil {
 		return hc, fmt.Errorf("hibernate output is not exists: %s", hc.Output)
 	}
 	return hc, nil
