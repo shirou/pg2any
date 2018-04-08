@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -25,6 +26,14 @@ func DirExists(dir string) error {
 	return nil
 }
 
+func SnakeToUpper(src string) string {
+	var ret []string
+	for _, b := range strings.Split(src, "_") {
+		ret = append(ret, strings.ToUpper(b))
+	}
+	return strings.Join(ret, "_")
+}
+
 func SnakeToUpperCamel(src string) string {
 	var ret []string
 	for _, b := range strings.Split(src, "_") {
@@ -43,6 +52,16 @@ func SnakeToLowerCamel(src string) string {
 		}
 	}
 	return strings.Join(ret, "")
+}
+
+func isNumber(v string) bool {
+	if _, err := strconv.Atoi(v); err == nil {
+		return true
+	}
+	if _, err := strconv.ParseFloat(v, 64); err == nil {
+		return true
+	}
+	return false
 }
 
 func contains(s []string, e string) bool {

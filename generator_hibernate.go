@@ -128,7 +128,7 @@ func (gen *Hibernate) members(table Table) []HibernateMember {
 		m := HibernateMember{
 			Name:    SnakeToLowerCamel(col.Name),
 			Type:    gen.convertType(col),
-			Comment: col.Comment.String,
+			Comment: strings.Replace(col.Comment.String, "\n", "", -1),
 		}
 		ret = append(ret, m)
 	}
@@ -212,13 +212,25 @@ func (gen *Hibernate) setter(col Column) (string, error) {
 }
 
 func (gen *Hibernate) buildType(wr io.Writer, typ Type) error {
-	members := strings.Join(typ.Values, ", ") + ";"
+	var mem []string
+	dt := "String"
+	for _, val := range typ.Values {
+		if isNumber(val) {
+			mem = append(mem, fmt.Sprintf("VALUE_%s(%s)", SnakeToUpper(val), val))
+			dt = "Integer"
+		} else {
+			mem = append(mem, fmt.Sprintf(`%s("%s")`, SnakeToUpper(val), val))
+		}
+	}
+
+	members := strings.Join(mem, ", ") + ";"
 
 	return gen.template.ExecuteTemplate(wr, "enum", map[string]interface{}{
 		"package_name": gen.config.PackageName,
 		"now":          time.Now().UTC().Format(time.RFC3339),
 		"name":         SnakeToUpperCamel(typ.Name),
 		"type":         typ,
+		"dt":           dt,
 		"members":      members,
 	})
 	return nil

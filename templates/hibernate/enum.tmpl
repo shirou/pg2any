@@ -10,5 +10,15 @@ package {{ .package_name }};
  */
 public enum {{ .name }} {
    {{ .members }}
+
+    private final {{ .dt }} value;
+
+    private {{ .name }}(final {{ .dt }} value) {
+        this.value = value;
+    }
+
+    public {{ .dt }} get{{ .dt }}() {
+        return this.value;
+    }
 }
 {{ end }}
