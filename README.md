@@ -1,13 +1,14 @@
 # pg2any
 
-pg2any is a small tool which inspect PostgreSQL information and output various kind of format.
+pg2any is a small tool which inspects PostgreSQL information and outputs via various kind of format.
 
+CAUTION: This tool is not aiming to be widely used. This has only tiny features.
 
-Current support output:
+Current support outputs:
 
 - hibernate (JPA)
+- sphinx (reStrcuturedText)
 - protobuf (protocol buffer)
-- sphinx (reStrcuturedText)  (but not implemented yet)
 
 
 # config
@@ -23,6 +24,14 @@ You can specify `-c` option or if not specified, pg2any search same directory.
       "output": "src/main/java/com/foo/bar/entity",
       "templates": "templates/hibernate",
       "package_name": "com.foo.bar.entity",
+      "ignore_tables": [
+        "flyway_schema_history"
+      ]
+    },
+    {
+      "type": "sphinx",
+      "output": "docs",
+      "templates": "templates/sphinx",
       "ignore_tables": [
         "flyway_schema_history"
       ]
@@ -53,8 +62,13 @@ You can specify `-c` option or if not specified, pg2any search same directory.
 - type: must be "sphinx".
 - output: output directory.
 - templates: template directory.
+- ignore_tables: list of ignore table.
+
+tips: To add toctree, `:glob:` is useful.
 
 ## protobuf config
+
+Protobuf generator outputs tables as `message`.
 
 - type: must be "protobuf".
 - output: output directory.

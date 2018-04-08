@@ -1,0 +1,23 @@
+{{- define "table" -}}
+.. Generated {{ .now }}
+
+{{ .name }}
+{{ writeUnderLine .name "=" }}
+
+{{ .comment }}
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Type
+     - Constraint
+     - Comment
+{{- range .member }}
+   * - {{ .Name }}
+     - {{ .Type }}
+     - {{ .Constraint }}
+     - {{ .Comment }}
+{{- end }}
+
+{{ end }}

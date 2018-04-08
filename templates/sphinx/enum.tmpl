@@ -1,0 +1,19 @@
+{{- define "enum" -}}
+.. Generated {{ .now }}
+
+Type List
+=========
+
+{{ range .members }}
+{{ .Name }}
+{{ writeUnderLine .Name "-" }}
+
+{{ .Comment }}
+
+{{ range $val := .Values }}
+- {{ $val }}
+{{- end }}
+
+{{ end }}
+
+{{ end }}
