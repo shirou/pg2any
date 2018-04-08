@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
 
@@ -68,6 +69,12 @@ func (gen *Hibernate) Build(ins InspectResult) error {
 	log.Printf("templates: %s", gen.config.Templates)
 	gen.ins = ins
 
+	// Load templates
+	tdir := filepath.Join(gen.config.Templates, "*.tmpl")
+	t := template.Must(template.ParseGlob(tdir))
+	gen.template = t
+
+	// Build tables
 	for _, table := range gen.ins.Tables {
 		if contains(gen.config.IgnoreTables, table.Name) {
 			continue
@@ -85,15 +92,24 @@ func (gen *Hibernate) Build(ins InspectResult) error {
 		}
 	}
 
+	// Build types
+	for _, typ := range gen.ins.Types {
+		fileName := SnakeToUpperCamel(typ.Name) + ".java"
+		file, err := os.Create(filepath.Join(gen.config.Output, fileName))
+		defer file.Close()
+		if err != nil {
+			return errors.Wrap(err, "build create file")
+		}
+		if err := gen.buildType(file, typ); err != nil {
+			return errors.Wrap(err, "build write type")
+		}
+	}
+
 	return nil
 }
 
 func (gen *Hibernate) buildTable(wr io.Writer, table Table) error {
-	tdir := filepath.Join(gen.config.Templates, "*.tmpl")
-	t := template.Must(template.ParseGlob(tdir))
-	gen.template = t
-
-	return t.ExecuteTemplate(wr, "class", map[string]interface{}{
+	return gen.template.ExecuteTemplate(wr, "class", map[string]interface{}{
 		"package_name": gen.config.PackageName,
 		"now":          time.Now().UTC().Format(time.RFC3339),
 		"table":        table,
@@ -164,6 +180,9 @@ func (gen *Hibernate) anotations(col Column) []string {
 	if col.Constraint.String == "u" {
 		unique = true
 	}
+	if gen.enumExists(col.DataType) {
+		ret = append(ret, "@Enumerated(EnumType.STRING)")
+	}
 
 	ret = append(ret, fmt.Sprintf(`@Column(name="%s", unique=%t, nullable=%t)`, col.Name, unique, !col.NotNull))
 
@@ -188,6 +207,28 @@ func (gen *Hibernate) setter(col Column) (string, error) {
 	}
 
 	return ret.String(), nil
+}
+
+func (gen *Hibernate) buildType(wr io.Writer, typ Type) error {
+	members := strings.Join(typ.Values, ", ") + ";"
+
+	return gen.template.ExecuteTemplate(wr, "enum", map[string]interface{}{
+		"package_name": gen.config.PackageName,
+		"now":          time.Now().UTC().Format(time.RFC3339),
+		"name":         SnakeToUpperCamel(typ.Name),
+		"type":         typ,
+		"members":      members,
+	})
+	return nil
+}
+
+func (gen *Hibernate) enumExists(typeName string) bool {
+	for _, typ := range gen.ins.Types {
+		if typ.Name == typeName {
+			return true
+		}
+	}
+	return false
 }
 
 func (gen *Hibernate) convertType(col Column) string {
