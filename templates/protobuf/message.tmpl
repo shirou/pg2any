@@ -1,0 +1,22 @@
+{{- define "message" -}}
+syntax = "proto3";
+// Generated {{ .now }}
+
+package {{ .package_name }};
+
+{{ if .java_package }}
+option java_package = "{{ .java_package }}";
+option java_multiple_files = true;
+{{ end }}
+
+import "enum.proto";
+
+/*
+ *  {{ .comment }}
+*/
+message {{ .name }} {
+{{- range .member }}
+    {{ .Constraint }} {{ .Type }} {{ .Name }} = {{ .Index }}; // {{ .Comment }}
+{{- end }}
+}
+{{ end }}

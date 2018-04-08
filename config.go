@@ -66,6 +66,8 @@ func NewGenerator(db *sql.DB, root string, config json.RawMessage) (Generator, e
 	switch c.Generator {
 	case HibernateTypeName:
 		return NewHibernate(db, root, config)
+	case ProtoBufTypeName:
+		return NewProtoBuf(db, root, config)
 	case SphinxTypeName:
 		//		return NewSphinx(db, config)
 	default:

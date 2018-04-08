@@ -6,8 +6,8 @@ pg2any is a small tool which inspect PostgreSQL information and output various k
 Current support output:
 
 - hibernate (JPA)
+- protobuf (protocol buffer)
 - sphinx (reStrcuturedText)  (but not implemented yet)
-- protoc (protocol buffer)  (but not implemented yet)
 
 
 # config
@@ -28,12 +28,11 @@ You can specify `-c` option or if not specified, pg2any search same directory.
       ]
     },
     {
-      "type": "protoc",
+      "type": "protobuf",
       "output": "src/proto",
-      "templates": "templates/protoc",
-      "target_tables": [
-        "user",
-        "company"
+      "templates": "templates/protobuf",
+      "ignore_tables": [
+        "flyway_schema_history"
       ]
     }
   ]
@@ -55,12 +54,13 @@ You can specify `-c` option or if not specified, pg2any search same directory.
 - output: output directory.
 - templates: template directory.
 
-## protoc config
+## protobuf config
 
-- type: must be "protoc".
+- type: must be "protobuf".
 - output: output directory.
 - templates: template directory.
-
+- package_name: package name.
+- ignore_tables: list of ignore table.
 
 # Thanks
 

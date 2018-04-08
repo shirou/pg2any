@@ -1,0 +1,18 @@
+{{- define "enum" -}}
+syntax = "proto3";
+// Generated {{ .now }}
+
+package {{ .package_name }};
+
+{{ if .java_package }}
+option java_package = "{{ .java_package }}";
+option java_multiple_files = true;
+{{ end }}
+
+{{- range .members }}
+// {{ .Comment }}
+enum {{ .Name }} {
+{{ .Values }}
+}
+{{- end }}
+{{ end }}
