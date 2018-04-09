@@ -29,7 +29,9 @@ type Column struct {
 	DataType      string         // data type
 	NotNull       bool           // not null
 	DefaultValue  sql.NullString // default value
-	Constraint    sql.NullString // Primary Key or not
+	PrimaryKey    bool
+	Unique        bool
+	Constraint    sql.NullString
 	ConstraintSrc sql.NullString
 	ForignTable   sql.NullString
 }
@@ -127,7 +129,8 @@ ORDER BY a.attnum`
 	if err != nil {
 		return nil, errors.Wrap(err, "columns query")
 	}
-	var ret []Column
+	tmp := make(map[string]Column)
+	var order []string
 	for q.Next() {
 		c := Column{}
 
@@ -146,7 +149,31 @@ ORDER BY a.attnum`
 		if err != nil {
 			return nil, errors.Wrap(err, "columns scan")
 		}
-		ret = append(ret, c)
+		switch c.Constraint.String {
+		case "p":
+			c.PrimaryKey = true
+		case "u":
+			c.Unique = true
+		}
+		o, exists := tmp[c.Name]
+		if !exists {
+			o = c
+		} else {
+			o.PrimaryKey = o.PrimaryKey || c.PrimaryKey
+			o.Unique = o.Unique || c.Unique
+			o.ForignTable = c.ForignTable
+			o.ConstraintSrc = c.ConstraintSrc
+		}
+
+		tmp[c.Name] = o
+		if !contains(order, c.Name) {
+			order = append(order, c.Name)
+		}
+	}
+
+	var ret []Column
+	for _, o := range order {
+		ret = append(ret, tmp[o])
 	}
 
 	return ret, nil

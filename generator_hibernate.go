@@ -144,9 +144,6 @@ func (gen *Hibernate) accessor(table Table) []string {
 			log.Fatal(err)
 		}
 		ret = append(ret, getter)
-		if contains(gen.config.ReadOnlyColumns, col.Name) {
-			continue
-		}
 
 		setter, err := gen.setter(col)
 		if err != nil {
@@ -174,19 +171,28 @@ func (gen *Hibernate) getter(col Column) (string, error) {
 
 func (gen *Hibernate) anotations(col Column) []string {
 	var ret []string
-	var unique bool
-	if col.Constraint.String == "p" {
+	if col.PrimaryKey {
 		ret = append(ret, "@Id")
-		unique = true
 	}
-	if col.Constraint.String == "u" {
-		unique = true
+	if col.Unique {
+		ret = append(ret, "@UniqueConstraint")
 	}
+	if col.ForignTable.Valid {
+		ret = append(ret, "// ForignTable = "+col.ForignTable.String)
+	}
+
 	if gen.enumExists(col.DataType) {
 		ret = append(ret, "@Enumerated(EnumType.STRING)")
 	}
 
-	ret = append(ret, fmt.Sprintf(`@Column(name="%s", unique=%t, nullable=%t)`, col.Name, unique, !col.NotNull))
+	column_args := make([]string, 0)
+	column_args = append(column_args, fmt.Sprintf(`name=%s"`, col.Name))
+	column_args = append(column_args, fmt.Sprintf("nullable=%t", !col.NotNull))
+	if contains(gen.config.ReadOnlyColumns, col.Name) {
+		column_args = append(column_args, "updatable=false")
+	}
+
+	ret = append(ret, fmt.Sprintf(`@Column(%s)`, strings.Join(column_args, ", ")))
 
 	return ret
 }
@@ -198,10 +204,16 @@ func (gen *Hibernate) setter(col Column) (string, error) {
 		constraint = "    // " + col.ConstraintSrc.String
 	}
 
+	var scope = "public"
+	if contains(gen.config.ReadOnlyColumns, col.Name) {
+		scope = "private"
+	}
+
 	data := map[string]interface{}{
 		"func":       SnakeToUpperCamel(col.Name),
 		"name":       SnakeToLowerCamel(col.Name),
 		"type":       gen.convertType(col),
+		"scope":      scope,
 		"constraint": constraint,
 	}
 	if err := gen.template.ExecuteTemplate(&ret, "setter", data); err != nil {

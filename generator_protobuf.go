@@ -146,7 +146,7 @@ func (gen *ProtoBuf) buildType(wr io.Writer, types []Type) error {
 			}
 		}
 		m := ProtoBufTypeMember{
-			Name:    name,
+			Name:    SnakeToUpperCamel(typ.Name),
 			Comment: typ.Comment.String,
 			Values:  "  " + strings.Join(vs, "\n  "),
 		}

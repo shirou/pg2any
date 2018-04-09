@@ -12,7 +12,9 @@ import (
 
 func main() {
 	var confFile string
+	var target string
 	flag.StringVar(&confFile, "c", "", "config file path")
+	flag.StringVar(&target, "t", "", "target build")
 	flag.Parse()
 	if confFile == "" {
 		path, err := os.Executable()
@@ -38,6 +40,9 @@ func main() {
 	}
 
 	for _, gen := range config.generators {
+		if target != "" && target != gen.GetType() {
+			continue
+		}
 		log.Printf("Generate: %s", gen.GetType())
 		if err := gen.Build(ins); err != nil {
 			log.Fatal(err)
