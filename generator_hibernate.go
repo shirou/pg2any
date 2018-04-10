@@ -186,7 +186,7 @@ func (gen *Hibernate) anotations(col Column) []string {
 	}
 
 	column_args := make([]string, 0)
-	column_args = append(column_args, fmt.Sprintf(`name=%s"`, col.Name))
+	column_args = append(column_args, fmt.Sprintf(`name="%s"`, col.Name))
 	column_args = append(column_args, fmt.Sprintf("nullable=%t", !col.NotNull))
 	if contains(gen.config.ReadOnlyColumns, col.Name) {
 		column_args = append(column_args, "updatable=false")
