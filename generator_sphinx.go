@@ -128,10 +128,14 @@ func (gen *Sphinx) members(table Table) []SphinxMember {
 		case "c":
 			cons = col.ConstraintSrc.String
 		}
+		dtype := col.DataType
+		if col.Serial {
+			dtype += "(serial)"
+		}
 
 		m := SphinxMember{
 			Name:       col.Name,
-			Type:       col.DataType,
+			Type:       dtype,
 			Constraint: cons,
 			Comment:    strings.Replace(col.Comment.String, "\n", "", -1),
 		}

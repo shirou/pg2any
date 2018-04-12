@@ -169,6 +169,11 @@ func (gen *Hibernate) getter(col Column) (string, error) {
 	return ret.String(), nil
 }
 
+func parseForignTable(src string) (string, string) {
+	// FOREIGN KEY (security_code) REFERENCES master_security(security_code)
+	return "", ""
+}
+
 func (gen *Hibernate) anotations(col Column) []string {
 	var ret []string
 	if col.PrimaryKey {
@@ -178,7 +183,11 @@ func (gen *Hibernate) anotations(col Column) []string {
 		ret = append(ret, "@UniqueConstraint")
 	}
 	if col.ForignTable.Valid {
-		ret = append(ret, "// ForignTable = "+col.ForignTable.String)
+		// a := `@JoinColumns({ @JoinColumn(name="userid", referencedColumnName="id") })`
+		// ret = append(ret, "// ForignTable = "+col.ForignTable.String)
+	}
+	if col.Serial {
+		ret = append(ret, "@GeneratedValue(strategy=GenerationType.IDENTITY)")
 	}
 
 	if gen.enumExists(col.DataType) {
@@ -263,7 +272,7 @@ func (gen *Hibernate) convertType(col Column) string {
 	switch col.DataType {
 	case "text":
 		return "String"
-	case "int":
+	case "int", "integer":
 		return "Integer"
 	case "float":
 		return "Float"
@@ -271,12 +280,20 @@ func (gen *Hibernate) convertType(col Column) string {
 		return "double"
 	case "bigint":
 		return "long"
+	case "serial":
+		return "Integer"
+	case "bigserial":
+		return "long"
 	case "uuid":
 		return "UUID"
 	case "numeric":
 		return "BigDecimal"
-	case "timestamp", "date", "timestamp with time zone":
+	case "date":
 		return "Date"
+	case "timestamp":
+		return "Timestamp"
+	case "timestamp with time zone":
+		return "OffsetDateTime"
 	case "boolean":
 		return "boolean"
 	default:

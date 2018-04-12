@@ -20,6 +20,7 @@ type Table struct {
 	AutoGenPk   bool
 	PrimaryKeys []Column
 	Columns     []Column
+	Indexs      []Index
 }
 
 type Column struct {
@@ -31,9 +32,13 @@ type Column struct {
 	DefaultValue  sql.NullString // default value
 	PrimaryKey    bool
 	Unique        bool
+	Serial        bool
+	Index         bool
 	Constraint    sql.NullString
 	ConstraintSrc sql.NullString
 	ForignTable   sql.NullString
+	SerialSrc     sql.NullString
+	IndexDef      sql.NullString
 }
 
 type Type struct {
@@ -42,6 +47,12 @@ type Type struct {
 	Comment  sql.NullString
 	NotNull  bool
 	Values   []string
+}
+
+type Index struct {
+	DataType string
+	Name     string
+	Comment  sql.NullString
 }
 
 func (ins InspectResult) FindType(name string) (Type, error) {
@@ -116,7 +127,8 @@ a.attnotnull,
 COALESCE(pg_get_expr(ad.adbin, ad.adrelid), ''),
 ct.contype,
 pg_catalog.pg_get_constraintdef(ct.oid, true),
-cc.relname
+cc.relname,
+pg_get_serial_sequence($2, a.attname)
 FROM pg_attribute a
 JOIN ONLY pg_class c ON c.oid = a.attrelid
 JOIN ONLY pg_namespace n ON n.oid = c.relnamespace
@@ -133,7 +145,6 @@ ORDER BY a.attnum`
 	var order []string
 	for q.Next() {
 		c := Column{}
-
 		// scan
 		err = q.Scan(
 			&c.FieldOrdinal,
@@ -145,6 +156,7 @@ ORDER BY a.attnum`
 			&c.Constraint,
 			&c.ConstraintSrc,
 			&c.ForignTable,
+			&c.SerialSrc,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "columns scan")
@@ -155,6 +167,10 @@ ORDER BY a.attnum`
 		case "u":
 			c.Unique = true
 		}
+		if c.SerialSrc.Valid {
+			c.Serial = true
+		}
+
 		o, exists := tmp[c.Name]
 		if !exists {
 			o = c
@@ -162,6 +178,7 @@ ORDER BY a.attnum`
 			o.PrimaryKey = o.PrimaryKey || c.PrimaryKey
 			o.Unique = o.Unique || c.Unique
 			o.ForignTable = c.ForignTable
+			o.Serial = c.Serial
 			o.ConstraintSrc = c.ConstraintSrc
 		}
 

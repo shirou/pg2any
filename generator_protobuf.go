@@ -81,7 +81,7 @@ func (gen *ProtoBuf) Build(ins InspectResult) error {
 		if contains(gen.config.IgnoreTables, table.Name) {
 			continue
 		}
-		fileName := SnakeToUpperCamel(table.Name) + ".proto"
+		fileName := SnakeToUpperCamel(table.Name) + "Message.proto"
 		file, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), fileName))
 		defer file.Close()
 		if err != nil {
@@ -113,7 +113,7 @@ func (gen *ProtoBuf) buildTable(wr io.Writer, table Table) error {
 		"now":          time.Now().UTC().Format(time.RFC3339),
 		"comment":      table.Comment.String,
 		"table":        table,
-		"name":         SnakeToUpperCamel(table.Name),
+		"name":         SnakeToUpperCamel(table.Name) + "Message",
 		"member":       gen.members(table),
 	})
 }
@@ -173,17 +173,20 @@ func (gen *ProtoBuf) enumExists(typeName string) bool {
 
 func (gen *ProtoBuf) convertType(col Column) string {
 	// https://developers.google.com/protocol-buffers/docs/proto3#simple
-
 	switch col.DataType {
 	case "text":
 		return "string"
-	case "int":
+	case "int", "integer":
 		return "int32"
 	case "float":
 		return "float"
 	case "double":
 		return "double"
 	case "bigint":
+		return "int64"
+	case "serial":
+		return "int32"
+	case "bigserial":
 		return "int64"
 	case "uuid":
 		return "string"
