@@ -267,6 +267,11 @@ func (gen *Hibernate) enumExists(typeName string) bool {
 }
 
 func (gen *Hibernate) convertType(col Column) string {
+	// numeric with presidion is double
+	if strings.Contains(col.DataType, "numeric(") {
+		return "BigDecimal"
+	}
+
 	// http://docs.jboss.org/hibernate/orm/5.2/userguide/html_single/Hibernate_User_Guide.html#basic
 
 	switch col.DataType {
@@ -297,6 +302,7 @@ func (gen *Hibernate) convertType(col Column) string {
 	case "boolean":
 		return "boolean"
 	default:
+
 		typ, err := gen.ins.FindType(col.DataType)
 		if err == nil {
 			return SnakeToUpperCamel(typ.Name)
