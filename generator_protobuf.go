@@ -196,6 +196,8 @@ func (gen *ProtoBuf) convertType(col Column) string {
 		return "string"
 	case "boolean":
 		return "bool"
+	case "json", "jsonb":
+		return "map<string, string>"
 	default:
 		typ, err := gen.ins.FindType(col.DataType)
 		if err == nil {

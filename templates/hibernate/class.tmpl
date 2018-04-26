@@ -5,6 +5,7 @@ package {{ .package_name }};
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.UUID;
+import java.util.Map;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import javax.persistence.Column;
@@ -19,6 +20,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
+import org.hibernate.annotations.Type;
+
 /**
  * {{ .name }} : {{ .table.Comment.String }}
  *
@@ -28,6 +31,7 @@ import javax.persistence.UniqueConstraint;
 @Table(name="{{ .table.Name }}"
     ,schema="public"
 )
+@SuppressWarnings("serial")
 public class {{ .name }} implements java.io.Serializable {
 {{- range .member }}
 	private {{ .Type }} {{ .Name }}; // {{ .Comment }}

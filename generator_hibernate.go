@@ -194,6 +194,10 @@ func (gen *Hibernate) anotations(col Column) []string {
 		ret = append(ret, "@Enumerated(EnumType.STRING)")
 	}
 
+	if col.DataType == "json" || col.DataType == "jsonb" {
+		ret = append(ret, `@Type(type = "JsonUserType")`)
+	}
+
 	column_args := make([]string, 0)
 	column_args = append(column_args, fmt.Sprintf(`name="%s"`, col.Name))
 	column_args = append(column_args, fmt.Sprintf("nullable=%t", !col.NotNull))
@@ -295,6 +299,8 @@ func (gen *Hibernate) convertType(col Column) string {
 		return "BigDecimal"
 	case "date":
 		return "Date"
+	case "json", "jsonb":
+		return "Map<String, String>"
 	case "timestamp":
 		return "Timestamp"
 	case "timestamp with time zone":
