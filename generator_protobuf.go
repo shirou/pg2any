@@ -123,7 +123,7 @@ func (gen *ProtoBuf) members(table Table) []ProtoBufMember {
 
 	for i, col := range table.Columns {
 		m := ProtoBufMember{
-			Name:    SnakeToLowerCamel(col.Name),
+			Name:    col.Name,
 			Type:    gen.convertType(col),
 			Comment: strings.Replace(col.Comment.String, "\n", "", -1),
 			Index:   i + 1,

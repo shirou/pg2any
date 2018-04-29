@@ -303,11 +303,17 @@ func (gen *Hibernate) convertType(col Column) string {
 		return "Map<String, String>"
 	case "timestamp":
 		return "Timestamp"
-	case "timestamp with time zone":
+	case "timestamp with time zone", "timestamp without time zone":
 		return "OffsetDateTime"
 	case "boolean":
 		return "boolean"
 	default:
+		if strings.HasPrefix(col.DataType, "numeric") {
+			return "BigDecimal"
+		}
+		if strings.HasPrefix(col.DataType, "character") {
+			return "String"
+		}
 
 		typ, err := gen.ins.FindType(col.DataType)
 		if err == nil {
