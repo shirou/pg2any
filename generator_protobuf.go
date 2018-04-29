@@ -173,6 +173,7 @@ func (gen *ProtoBuf) enumExists(typeName string) bool {
 
 func (gen *ProtoBuf) convertType(col Column) string {
 	// https://developers.google.com/protocol-buffers/docs/proto3#simple
+
 	switch col.DataType {
 	case "text":
 		return "string"
@@ -192,13 +193,20 @@ func (gen *ProtoBuf) convertType(col Column) string {
 		return "string"
 	case "numeric":
 		return "int64"
-	case "timestamp", "date", "timestamp with time zone":
+	case "timestamp", "date", "timestamp with time zone", "timestamp without time zone":
 		return "string"
 	case "boolean":
 		return "bool"
 	case "json", "jsonb":
 		return "map<string, string>"
 	default:
+		if strings.HasPrefix(col.DataType, "numeric") {
+			return "int64"
+		}
+		if strings.HasPrefix(col.DataType, "character") {
+			return "string"
+		}
+
 		typ, err := gen.ins.FindType(col.DataType)
 		if err == nil {
 			return gen.config.PackageName + "." + SnakeToUpperCamel(typ.Name)
