@@ -17,13 +17,14 @@ import (
 )
 
 type HibernateConfig struct {
-	Output          string   `json:"output"`
-	Templates       string   `json:"templates"`
-	Overwrites      []string `json:"overwrites"`
-	PackageName     string   `json:"package_name"`
-	IgnoreTables    []string `json:"ignore_tables"`
-	ReadOnlyColumns []string `json:"read_only_columns"`
-	IgnoreColumns   []string `json:"ignore_columns"`
+	Output               string   `json:"output"`
+	Templates            string   `json:"templates"`
+	Overwrites           []string `json:"overwrites"`
+	PackageName          string   `json:"package_name"`
+	IgnoreTables         []string `json:"ignore_tables"`
+	NotInsertableColumns []string `json:"not_insertable_columns"`
+	NotUpdatableColumns  []string `json:"not_updatable_columns"`
+	IgnoreColumns        []string `json:"ignore_columns"`
 }
 
 type Hibernate struct {
@@ -102,7 +103,15 @@ func (gen *Hibernate) Build(ins InspectResult) error {
 		if err != nil {
 			return errors.Wrap(err, "build create file")
 		}
-		if err := gen.buildType(file, typ); err != nil {
+
+		utFileName := SnakeToUpperCamel(typ.Name) + "UserType.java"
+		utFile, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), utFileName))
+		defer utFile.Close()
+		if err != nil {
+			return errors.Wrap(err, "build usertype file")
+		}
+
+		if err := gen.buildType(file, utFile, typ); err != nil {
 			return errors.Wrap(err, "build write type")
 		}
 	}
@@ -191,7 +200,9 @@ func (gen *Hibernate) anotations(col Column) []string {
 	}
 
 	if gen.enumExists(col.DataType) {
-		ret = append(ret, "@Enumerated(EnumType.STRING)")
+		ret = append(ret, fmt.Sprintf(`@Type(type = "%s.%sUserType")`,
+			gen.config.PackageName,
+			SnakeToUpperCamel(col.DataType)))
 	}
 
 	if col.DataType == "json" || col.DataType == "jsonb" {
@@ -201,7 +212,10 @@ func (gen *Hibernate) anotations(col Column) []string {
 	column_args := make([]string, 0)
 	column_args = append(column_args, fmt.Sprintf(`name="%s"`, col.Name))
 	column_args = append(column_args, fmt.Sprintf("nullable=%t", !col.NotNull))
-	if contains(gen.config.ReadOnlyColumns, col.Name) {
+	if contains(gen.config.NotInsertableColumns, col.Name) {
+		column_args = append(column_args, "insertable=false")
+	}
+	if contains(gen.config.NotUpdatableColumns, col.Name) {
 		column_args = append(column_args, "updatable=false")
 	}
 
@@ -218,7 +232,10 @@ func (gen *Hibernate) setter(col Column) (string, error) {
 	}
 
 	var scope = "public"
-	if contains(gen.config.ReadOnlyColumns, col.Name) {
+	if contains(gen.config.NotInsertableColumns, col.Name) {
+		scope = "private"
+	}
+	if contains(gen.config.NotUpdatableColumns, col.Name) {
 		scope = "private"
 	}
 
@@ -236,9 +253,10 @@ func (gen *Hibernate) setter(col Column) (string, error) {
 	return ret.String(), nil
 }
 
-func (gen *Hibernate) buildType(wr io.Writer, typ Type) error {
+func (gen *Hibernate) buildType(wr, utwr io.Writer, typ Type) error {
 	var mem []string
 	dt := "String"
+
 	for _, val := range typ.Values {
 		if isNumber(val) {
 			mem = append(mem, fmt.Sprintf("VALUE_%s(%s)", SnakeToUpper(val), val))
@@ -250,14 +268,29 @@ func (gen *Hibernate) buildType(wr io.Writer, typ Type) error {
 
 	members := strings.Join(mem, ", ") + ";"
 
-	return gen.template.ExecuteTemplate(wr, "enum", map[string]interface{}{
+	if err := gen.template.ExecuteTemplate(wr, "enum", map[string]interface{}{
 		"package_name": gen.config.PackageName,
 		"now":          time.Now().UTC().Format(time.RFC3339),
 		"name":         SnakeToUpperCamel(typ.Name),
 		"type":         typ,
 		"dt":           dt,
 		"members":      members,
-	})
+	}); err != nil {
+		return err
+	}
+
+	if err := gen.template.ExecuteTemplate(utwr, "enum_usertype", map[string]interface{}{
+		"package_name": gen.config.PackageName,
+		"now":          time.Now().UTC().Format(time.RFC3339),
+		"name":         SnakeToUpperCamel(typ.Name),
+		"snake":        (typ.Name),
+		"type":         typ,
+		"dt":           dt,
+		"members":      members,
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
 

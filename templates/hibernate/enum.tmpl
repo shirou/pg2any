@@ -17,6 +17,10 @@ public enum {{ .name }} {
         this.value = value;
     }
 
+    public {{ .dt }} getValue() {
+        return this.value;
+    }
+
     public {{ .dt }} get{{ .dt }}() {
         return this.value;
     }
