@@ -16,12 +16,13 @@ import (
 )
 
 type ProtoBufConfig struct {
-	Output       string   `json:"output"`
-	Templates    string   `json:"templates"`
-	Overwrites   []string `json:"overwrites"`
-	PackageName  string   `json:"package_name"`
-	JavaPackage  string   `json:"java_package"`
-	IgnoreTables []string `json:"ignore_tables"`
+	Output             string   `json:"output"`
+	Templates          string   `json:"templates"`
+	Overwrites         []string `json:"overwrites"`
+	PackageName        string   `json:"package_name"`
+	JavaPackage        string   `json:"java_package"`
+	IgnoreTables       []string `json:"ignore_tables"`
+	UseStringToNumeric bool     `json:"use_string_to_numeric"`
 }
 
 type ProtoBuf struct {
@@ -192,6 +193,9 @@ func (gen *ProtoBuf) convertType(col Column) string {
 	case "uuid":
 		return "string"
 	case "numeric":
+		if gen.config.UseStringToNumeric {
+			return "string"
+		}
 		return "int64"
 	case "timestamp", "date", "timestamp with time zone", "timestamp without time zone":
 		return "string"
@@ -201,6 +205,9 @@ func (gen *ProtoBuf) convertType(col Column) string {
 		return "map<string, string>"
 	default:
 		if strings.HasPrefix(col.DataType, "numeric") {
+			if gen.config.UseStringToNumeric {
+				return "string"
+			}
 			return "int64"
 		}
 		if strings.HasPrefix(col.DataType, "character") {

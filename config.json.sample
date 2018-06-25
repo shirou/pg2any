@@ -17,7 +17,8 @@
       "target_tables": [
         "user",
         "company"
-      ]
+      ],
+      "use_string_to_numeric": false
     }
   ]
 }

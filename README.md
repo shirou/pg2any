@@ -34,7 +34,8 @@ You can specify `-c` option or if not specified, pg2any search same directory.
       "templates": "templates/sphinx",
       "ignore_tables": [
         "flyway_schema_history"
-      ]
+      ],
+      "use_string_to_numeric": true
     },
     {
       "type": "protobuf",
@@ -75,6 +76,7 @@ Protobuf generator outputs tables as `message`.
 - templates: template directory.
 - package_name: package name.
 - ignore_tables: list of ignore table.
+- use_string_to_numeric: if true, use `string` instead of `int64` on numeric type
 
 # Thanks
 
