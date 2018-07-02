@@ -311,49 +311,64 @@ func (gen *Hibernate) convertType(col Column) string {
 
 	// http://docs.jboss.org/hibernate/orm/5.2/userguide/html_single/Hibernate_User_Guide.html#basic
 
+	array := false
+	if strings.HasSuffix(col.DataType, "[]") {
+		array = true
+		col.DataType = strings.Replace(col.DataType, "[]", "", 1)
+	}
+
+	f := func(t string, a bool) string {
+		if a {
+			return fmt.Sprintf("ArrayList<%s>", t)
+		}
+		return t
+	}
+
 	switch col.DataType {
 	case "text":
-		return "String"
+		return f("String", array)
 	case "int", "integer":
-		return "Integer"
+		return f("Integer", array)
 	case "float":
-		return "Float"
+		return f("Float", array)
 	case "double":
-		return "double"
+		return f("double", array)
 	case "bigint":
-		return "long"
+		return f("long", array)
 	case "serial":
-		return "Integer"
+		return f("Integer", array)
 	case "bigserial":
-		return "long"
+		return f("long", array)
 	case "uuid":
-		return "UUID"
+		return f("UUID", array)
+	case "bytea":
+		return "byte[]" // always byte[]
 	case "numeric":
-		return "BigDecimal"
+		return f("BigDecimal", array)
 	case "date":
-		return "Date"
+		return f("Date", array)
 	case "json", "jsonb":
-		return "Map<String, String>"
+		return f("Map<String, String>", array)
 	case "timestamp":
-		return "Timestamp"
+		return f("Timestamp", array)
 	case "timestamp with time zone", "timestamp without time zone":
-		return "OffsetDateTime"
+		return f("OffsetDateTime", array)
 	case "boolean":
-		return "boolean"
+		return f("boolean", array)
 	default:
 		if strings.HasPrefix(col.DataType, "numeric") {
-			return "BigDecimal"
+			return f("BigDecimal", array)
 		}
 		if strings.HasPrefix(col.DataType, "character") {
-			return "String"
+			return f("String", array)
 		}
 
 		typ, err := gen.ins.FindType(col.DataType)
 		if err == nil {
-			return SnakeToUpperCamel(typ.Name)
+			return f(SnakeToUpperCamel(typ.Name), array)
 		}
 	}
-	return col.DataType
+	return f(col.DataType, array)
 }
 
 func loadHibernateConfig(root string, raw json.RawMessage) (HibernateConfig, error) {
