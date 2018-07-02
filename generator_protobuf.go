@@ -175,51 +175,59 @@ func (gen *ProtoBuf) enumExists(typeName string) bool {
 func (gen *ProtoBuf) convertType(col Column) string {
 	// https://developers.google.com/protocol-buffers/docs/proto3#simple
 
+	var array = ""
+	if strings.HasSuffix(col.DataType, "[]") {
+		array = "repeated "
+		col.DataType = strings.Replace(col.DataType, "[]", "", 1)
+	}
+
 	switch col.DataType {
 	case "text":
-		return "string"
+		return array + "string"
 	case "int", "integer":
-		return "int32"
+		return array + "int32"
 	case "float":
-		return "float"
+		return array + "float"
 	case "double":
-		return "double"
+		return array + "double"
 	case "bigint":
-		return "int64"
+		return array + "int64"
 	case "serial":
-		return "int32"
+		return array + "int32"
 	case "bigserial":
-		return "int64"
+		return array + "int64"
 	case "uuid":
-		return "string"
+		return array + "string"
+	case "bytea":
+		return array + "bytes"
 	case "numeric":
 		if gen.config.UseStringToNumeric {
-			return "string"
+			return array + "string"
 		}
-		return "int64"
+		return array + "int64"
 	case "timestamp", "date", "timestamp with time zone", "timestamp without time zone":
-		return "string"
+		return array + "string"
 	case "boolean":
-		return "bool"
+		return array + "bool"
 	case "json", "jsonb":
-		return "map<string, string>"
+		return array + "map<string, string>"
 	default:
 		if strings.HasPrefix(col.DataType, "numeric") {
 			if gen.config.UseStringToNumeric {
-				return "string"
+				return array + "string"
 			}
-			return "int64"
+			return array + "int64"
 		}
 		if strings.HasPrefix(col.DataType, "character") {
-			return "string"
+			return array + "string"
 		}
 
 		typ, err := gen.ins.FindType(col.DataType)
 		if err == nil {
-			return gen.config.PackageName + "." + SnakeToUpperCamel(typ.Name)
+			return array + gen.config.PackageName + "." + SnakeToUpperCamel(typ.Name)
 		}
 	}
-	return col.DataType
+	return array + col.DataType
 }
 
 func loadProtoBufConfig(root string, raw json.RawMessage) (ProtoBufConfig, error) {
