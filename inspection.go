@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -34,6 +35,7 @@ type Column struct {
 	Unique        bool
 	Serial        bool
 	Index         bool
+	Array         bool
 	Constraint    sql.NullString
 	ConstraintSrc sql.NullString
 	ForignTable   sql.NullString
@@ -169,6 +171,9 @@ ORDER BY a.attnum`
 		}
 		if c.SerialSrc.Valid {
 			c.Serial = true
+		}
+		if strings.HasSuffix(c.DataType, "[]") {
+			c.Array = true
 		}
 
 		o, exists := tmp[c.Name]

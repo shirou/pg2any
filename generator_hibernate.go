@@ -132,11 +132,15 @@ func (gen *Hibernate) buildTable(wr io.Writer, table Table) error {
 
 func (gen *Hibernate) members(table Table) []HibernateMember {
 	var ret []HibernateMember
-
 	for _, col := range table.Columns {
+		t := gen.convertType(col)
+		if col.Array {
+			t += "[]"
+		}
+
 		m := HibernateMember{
 			Name:    SnakeToLowerCamel(col.Name),
-			Type:    gen.convertType(col),
+			Type:    t,
 			Comment: strings.Replace(col.Comment.String, "\n", "", -1),
 		}
 		ret = append(ret, m)
@@ -165,10 +169,14 @@ func (gen *Hibernate) accessor(table Table) []string {
 
 func (gen *Hibernate) getter(col Column) (string, error) {
 	var ret bytes.Buffer
+	t := gen.convertType(col)
+	if col.Array {
+		t += "[]"
+	}
 	data := map[string]interface{}{
 		"func":       SnakeToUpperCamel(col.Name),
 		"name":       SnakeToLowerCamel(col.Name),
-		"type":       gen.convertType(col),
+		"type":       t,
 		"anotations": gen.anotations(col),
 	}
 	if err := gen.template.ExecuteTemplate(&ret, "getter", data); err != nil {
@@ -207,6 +215,11 @@ func (gen *Hibernate) anotations(col Column) []string {
 
 	if col.DataType == "json" || col.DataType == "jsonb" {
 		ret = append(ret, `@Type(type = "JsonUserType")`)
+	}
+
+	if col.Array {
+		t := strings.Title(gen.convertType(col))
+		ret = append(ret, fmt.Sprintf(`@Type(type = "%sArrayUserType")`, t))
 	}
 
 	column_args := make([]string, 0)
@@ -309,66 +322,55 @@ func (gen *Hibernate) convertType(col Column) string {
 		return "BigDecimal"
 	}
 
+	t := strings.Replace(col.DataType, "[]", "", 1)
+
 	// http://docs.jboss.org/hibernate/orm/5.2/userguide/html_single/Hibernate_User_Guide.html#basic
 
-	array := false
-	if strings.HasSuffix(col.DataType, "[]") {
-		array = true
-		col.DataType = strings.Replace(col.DataType, "[]", "", 1)
-	}
-
-	f := func(t string, a bool) string {
-		if a {
-			return fmt.Sprintf("ArrayList<%s>", t)
-		}
-		return t
-	}
-
-	switch col.DataType {
+	switch t {
 	case "text":
-		return f("String", array)
+		return "String"
 	case "int", "integer":
-		return f("Integer", array)
+		return "Integer"
 	case "float":
-		return f("Float", array)
+		return "Float"
 	case "double":
-		return f("double", array)
+		return "double"
 	case "bigint":
-		return f("long", array)
+		return "long"
 	case "serial":
-		return f("Integer", array)
+		return "Integer"
 	case "bigserial":
-		return f("long", array)
+		return "long"
 	case "uuid":
-		return f("UUID", array)
+		return "UUID"
 	case "bytea":
 		return "byte[]" // always byte[]
 	case "numeric":
-		return f("BigDecimal", array)
+		return "BigDecimal"
 	case "date":
-		return f("Date", array)
+		return "Date"
 	case "json", "jsonb":
-		return f("Map<String, String>", array)
+		return "Map<String, String>"
 	case "timestamp":
-		return f("Timestamp", array)
+		return "Timestamp"
 	case "timestamp with time zone", "timestamp without time zone":
-		return f("OffsetDateTime", array)
+		return "OffsetDateTime"
 	case "boolean":
-		return f("boolean", array)
+		return "boolean"
 	default:
-		if strings.HasPrefix(col.DataType, "numeric") {
-			return f("BigDecimal", array)
+		if strings.HasPrefix(t, "numeric") {
+			return "BigDecimal"
 		}
-		if strings.HasPrefix(col.DataType, "character") {
-			return f("String", array)
+		if strings.HasPrefix(t, "character") {
+			return "String"
 		}
 
-		typ, err := gen.ins.FindType(col.DataType)
+		typ, err := gen.ins.FindType(t)
 		if err == nil {
-			return f(SnakeToUpperCamel(typ.Name), array)
+			return SnakeToUpperCamel(typ.Name)
 		}
 	}
-	return f(col.DataType, array)
+	return col.DataType
 }
 
 func loadHibernateConfig(root string, raw json.RawMessage) (HibernateConfig, error) {
