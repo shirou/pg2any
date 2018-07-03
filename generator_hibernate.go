@@ -252,10 +252,14 @@ func (gen *Hibernate) setter(col Column) (string, error) {
 		scope = "private"
 	}
 
+	t := gen.convertType(col)
+	if col.Array {
+		t += "[]"
+	}
 	data := map[string]interface{}{
 		"func":       SnakeToUpperCamel(col.Name),
 		"name":       SnakeToLowerCamel(col.Name),
-		"type":       gen.convertType(col),
+		"type":       t,
 		"scope":      scope,
 		"constraint": constraint,
 	}
