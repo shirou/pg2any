@@ -352,7 +352,7 @@ func (gen *Hibernate) convertType(col Column) string {
 	case "numeric":
 		return "BigDecimal"
 	case "date":
-		return "Date"
+		return "LocalDate"
 	case "json", "jsonb":
 		return "Map<String, String>"
 	case "timestamp":
