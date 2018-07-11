@@ -20,6 +20,7 @@ type ProtoBufConfig struct {
 	Templates          string   `json:"templates"`
 	Overwrites         []string `json:"overwrites"`
 	PackageName        string   `json:"package_name"`
+	EnumDir            string   `json:"enum_dir"`
 	JavaPackage        string   `json:"java_package"`
 	IgnoreTables       []string `json:"ignore_tables"`
 	UseStringToNumeric bool     `json:"use_string_to_numeric"`
@@ -116,6 +117,7 @@ func (gen *ProtoBuf) buildTable(wr io.Writer, table Table) error {
 		"table":        table,
 		"name":         SnakeToUpperCamel(table.Name) + "Message",
 		"member":       gen.members(table),
+		"enum_path":    filepath.Join(gen.config.EnumDir, "enum.proto"),
 	})
 }
 
