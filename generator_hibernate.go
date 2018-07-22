@@ -135,7 +135,7 @@ func (gen *Hibernate) members(table Table) []HibernateMember {
 	for _, col := range table.Columns {
 		t := gen.convertType(col)
 		if col.Array {
-			t += "[]"
+			t = fmt.Sprintf("List<%s>", t)
 		}
 
 		m := HibernateMember{
@@ -171,7 +171,7 @@ func (gen *Hibernate) getter(col Column) (string, error) {
 	var ret bytes.Buffer
 	t := gen.convertType(col)
 	if col.Array {
-		t += "[]"
+		t = fmt.Sprintf("List<%s>", t)
 	}
 	data := map[string]interface{}{
 		"func":       SnakeToUpperCamel(col.Name),
@@ -254,7 +254,7 @@ func (gen *Hibernate) setter(col Column) (string, error) {
 
 	t := gen.convertType(col)
 	if col.Array {
-		t += "[]"
+		t = fmt.Sprintf("List<%s>", t)
 	}
 	data := map[string]interface{}{
 		"func":       SnakeToUpperCamel(col.Name),
