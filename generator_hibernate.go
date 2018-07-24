@@ -41,6 +41,13 @@ type HibernateMember struct {
 	Comment string
 }
 
+type HibernateMetamodel struct {
+	Attr    string
+	ClsName string
+	Name    string
+	Type    string
+}
+
 type HibernateAccessor struct {
 	get  bool
 	name string
@@ -84,7 +91,6 @@ func (gen *Hibernate) Build(ins InspectResult) error {
 		}
 
 		fileName := SnakeToUpperCamel(table.Name) + ".java"
-
 		file, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), fileName))
 		defer file.Close()
 		if err != nil {
@@ -92,6 +98,14 @@ func (gen *Hibernate) Build(ins InspectResult) error {
 		}
 		if err := gen.buildTable(file, table); err != nil {
 			return errors.Wrap(err, "build write table")
+		}
+
+		// generate meta model class file
+		metaFileName := SnakeToUpperCamel(table.Name) + "_.java"
+		metaFile, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), metaFileName))
+		defer metaFile.Close()
+		if err := gen.buildMetamodel(metaFile, table); err != nil {
+			return errors.Wrap(err, "build write metamodel")
 		}
 	}
 
@@ -130,6 +144,14 @@ func (gen *Hibernate) buildTable(wr io.Writer, table Table) error {
 	})
 }
 
+func (gen *Hibernate) buildMetamodel(wr io.Writer, table Table) error {
+	return gen.template.ExecuteTemplate(wr, "metamodel", map[string]interface{}{
+		"package_name": gen.config.PackageName,
+		"name":         SnakeToUpperCamel(table.Name),
+		"member":       gen.metamodel(table),
+	})
+}
+
 func (gen *Hibernate) members(table Table) []HibernateMember {
 	var ret []HibernateMember
 	for _, col := range table.Columns {
@@ -142,6 +164,30 @@ func (gen *Hibernate) members(table Table) []HibernateMember {
 			Name:    SnakeToLowerCamel(col.Name),
 			Type:    t,
 			Comment: strings.Replace(col.Comment.String, "\n", "", -1),
+		}
+		ret = append(ret, m)
+	}
+	return ret
+}
+
+func (gen *Hibernate) metamodel(table Table) []HibernateMetamodel {
+	var ret []HibernateMetamodel
+	for _, col := range table.Columns {
+		t := gen.convertType(col)
+		attr := "SingularAttribute"
+		if col.Array {
+			attr = "ListAttribute"
+		}
+		if strings.HasPrefix(t, "Map") {
+			attr = "MapAttribute"
+			t = "String, String"
+		}
+
+		m := HibernateMetamodel{
+			Attr:    attr,
+			ClsName: SnakeToUpperCamel(table.Name),
+			Name:    SnakeToLowerCamel(col.Name),
+			Type:    strings.Title(t),
 		}
 		ret = append(ret, m)
 	}
