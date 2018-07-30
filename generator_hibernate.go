@@ -386,11 +386,11 @@ func (gen *Hibernate) convertType(col Column) string {
 	case "double":
 		return "double"
 	case "bigint":
-		return "long"
+		return "Long"
 	case "serial":
 		return "Integer"
 	case "bigserial":
-		return "long"
+		return "Long"
 	case "uuid":
 		return "UUID"
 	case "bytea":
