@@ -207,8 +207,10 @@ func (gen *ProtoBuf) convertType(col Column) string {
 			return array + "string"
 		}
 		return array + "int64"
-	case "timestamp", "date", "timestamp with time zone", "timestamp without time zone":
+	case "date":
 		return array + "string"
+	case "timestamp", "timestamp with time zone", "timestamp without time zone":
+		return array + "google.protobuf.Timestamp"
 	case "boolean":
 		return array + "bool"
 	case "json", "jsonb":
