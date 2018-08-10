@@ -8,17 +8,37 @@
       "package_name": "com.foo.bar.entity",
       "ignore_tables": [
         "flyway_schema_history"
+      ],
+      "not_insertable_columns": [
+        "create_datetime",
+        "update_datetime"
+      ],
+      "not_updatable_columns": [
+        "create_datetime"
       ]
     },
     {
       "type": "protoc",
       "output": "src/proto",
       "templates": "templates/protoc",
+      "package_name": "example",
+      "java_package": "com.example.messages",
+      "go_package": "messages",
       "target_tables": [
         "user",
         "company"
       ],
+      "ignore_tables": [
+        "flyway_schema_history"
+      ],
       "use_string_to_numeric": false
+    },
+    {
+      "type": "sphinx",
+      "output": "path/to/docs/database",
+      "templates": "templates/sphinx",
+      "ignore_tables": [
+      ]
     }
   ]
 }

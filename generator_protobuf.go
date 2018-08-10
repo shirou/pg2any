@@ -22,6 +22,7 @@ type ProtoBufConfig struct {
 	PackageName        string   `json:"package_name"`
 	EnumDir            string   `json:"enum_dir"`
 	JavaPackage        string   `json:"java_package"`
+	GoPackage          string   `json:"go_package"`
 	IgnoreTables       []string `json:"ignore_tables"`
 	UseStringToNumeric bool     `json:"use_string_to_numeric"`
 }
@@ -112,6 +113,7 @@ func (gen *ProtoBuf) buildTable(wr io.Writer, table Table) error {
 	return gen.template.ExecuteTemplate(wr, "message", map[string]interface{}{
 		"package_name": gen.config.PackageName,
 		"java_package": gen.config.JavaPackage,
+		"go_package":   gen.config.GoPackage,
 		"now":          time.Now().UTC().Format(time.RFC3339),
 		"comment":      table.Comment.String,
 		"table":        table,
@@ -159,6 +161,7 @@ func (gen *ProtoBuf) buildType(wr io.Writer, types []Type) error {
 	return gen.template.ExecuteTemplate(wr, "enum", map[string]interface{}{
 		"package_name": gen.config.PackageName,
 		"java_package": gen.config.JavaPackage,
+		"go_package":   gen.config.GoPackage,
 		"now":          time.Now().UTC().Format(time.RFC3339),
 		"members":      members,
 	})
