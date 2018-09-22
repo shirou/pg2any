@@ -154,10 +154,15 @@ func (gen *Hibernate) buildMetamodel(wr io.Writer, table Table) error {
 
 func (gen *Hibernate) members(table Table) []HibernateMember {
 	var ret []HibernateMember
+	hasPrimary := false
+
 	for _, col := range table.Columns {
 		t := gen.convertType(col)
 		if col.Array {
 			t = fmt.Sprintf("List<%s>", t)
+		}
+		if col.PrimaryKey {
+			hasPrimary = true
 		}
 
 		m := HibernateMember{
@@ -167,6 +172,10 @@ func (gen *Hibernate) members(table Table) []HibernateMember {
 		}
 		ret = append(ret, m)
 	}
+	if !hasPrimary {
+		log.Printf("WARN: %s doesn't has primary key", table.Name)
+	}
+
 	return ret
 }
 
