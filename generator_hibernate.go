@@ -12,6 +12,7 @@ import (
 	"strings"
 	"text/template"
 	"time"
+	"unicode"
 
 	"github.com/pkg/errors"
 )
@@ -195,12 +196,29 @@ func (gen *Hibernate) metamodel(table Table) []HibernateMetamodel {
 		m := HibernateMetamodel{
 			Attr:    attr,
 			ClsName: SnakeToUpperCamel(table.Name),
-			Name:    SnakeToLowerCamel(col.Name),
+			Name:    decapitalize(SnakeToUpperCamel(col.Name)),
 			Type:    strings.Title(t),
 		}
 		ret = append(ret, m)
 	}
 	return ret
+}
+
+// decapitalize is a utility method to convert to normal Java variable capitalization.
+// This measns the first charactor from upper case to lower case. However, this has a special case,
+// there is more than one character and both the first and  second characters are upper case, we leave it alone.
+// https://github.com/hibernate/hibernate-orm/blob/e5dc635a52362f69b69acb8d5b166b69b165dbbd/tooling/metamodel-generator/src/main/java/org/hibernate/jpamodelgen/util/StringUtil.java#L87
+func decapitalize(name string) string {
+	if name == "" || startsWithSeveralUpperCaseLetters(name) || len(name) < 2 {
+		return name
+	} else {
+		return strings.ToLower(string(name[0])) + strings.ToLower(string(name[1])) + string(name[2:])
+
+	}
+}
+
+func startsWithSeveralUpperCaseLetters(str string) bool {
+	return len(str) > 1 && unicode.IsUpper(rune(str[0])) && unicode.IsUpper(rune(str[1]))
 }
 
 func (gen *Hibernate) accessor(table Table) []string {
