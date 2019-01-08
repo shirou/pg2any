@@ -26,6 +26,7 @@ type HibernateConfig struct {
 	NotInsertableColumns []string `json:"not_insertable_columns"`
 	NotUpdatableColumns  []string `json:"not_updatable_columns"`
 	IgnoreColumns        []string `json:"ignore_columns"`
+	GenerateMetamodel    bool     `json:"generate_metamodel"`
 }
 
 type Hibernate struct {
@@ -101,12 +102,17 @@ func (gen *Hibernate) Build(ins InspectResult) error {
 			return errors.Wrap(err, "build write table")
 		}
 
-		// generate meta model class file
-		metaFileName := SnakeToUpperCamel(table.Name) + "_.java"
-		metaFile, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), metaFileName))
-		defer metaFile.Close()
-		if err := gen.buildMetamodel(metaFile, table); err != nil {
-			return errors.Wrap(err, "build write metamodel")
+		if gen.config.GenerateMetamodel {
+			// generate meta model class file
+			metaFileName := SnakeToUpperCamel(table.Name) + "_.java"
+			metaFile, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), metaFileName))
+			if err != nil {
+				return errors.Wrap(err, "create metamodel file")
+			}
+			defer metaFile.Close()
+			if err := gen.buildMetamodel(metaFile, table); err != nil {
+				return errors.Wrap(err, "build write metamodel")
+			}
 		}
 	}
 
@@ -160,7 +166,7 @@ func (gen *Hibernate) members(table Table) []HibernateMember {
 	for _, col := range table.Columns {
 		t := gen.convertType(col)
 		if col.Array {
-			t = fmt.Sprintf("List<%s>", t)
+			t = fmt.Sprintf("%s[]", t)
 		}
 		if col.PrimaryKey {
 			hasPrimary = true
@@ -184,20 +190,18 @@ func (gen *Hibernate) metamodel(table Table) []HibernateMetamodel {
 	var ret []HibernateMetamodel
 	for _, col := range table.Columns {
 		t := gen.convertType(col)
-		attr := "SingularAttribute"
+		attr := "SingularAttribute" // Only Singular is used
+
+		typ := strings.Title(t)
 		if col.Array {
-			attr = "ListAttribute"
-		}
-		if strings.HasPrefix(t, "Map") {
-			attr = "MapAttribute"
-			t = "String, String"
+			typ = typ + "[]"
 		}
 
 		m := HibernateMetamodel{
 			Attr:    attr,
 			ClsName: SnakeToUpperCamel(table.Name),
 			Name:    decapitalize(SnakeToUpperCamel(col.Name)),
-			Type:    strings.Title(t),
+			Type:    typ,
 		}
 		ret = append(ret, m)
 	}
@@ -399,6 +403,7 @@ func (gen *Hibernate) convertType(col Column) string {
 		return "BigDecimal"
 	}
 
+	// Remove array charactor (we can still get this column is array from other value)
 	t := strings.Replace(col.DataType, "[]", "", 1)
 
 	// http://docs.jboss.org/hibernate/orm/5.2/userguide/html_single/Hibernate_User_Guide.html#basic
@@ -427,7 +432,7 @@ func (gen *Hibernate) convertType(col Column) string {
 	case "date":
 		return "LocalDate"
 	case "json", "jsonb":
-		return "Map<String, String>"
+		return "JsonObject"
 	case "timestamp":
 		return "Timestamp"
 	case "timestamp with time zone", "timestamp without time zone":

@@ -70,6 +70,8 @@ func NewGenerator(db *sql.DB, root string, config json.RawMessage) (Generator, e
 		return NewProtoBuf(db, root, config)
 	case SphinxTypeName:
 		return NewSphinx(db, root, config)
+	case FakedataTypeName:
+		return NewFakedata(db, root, config)
 	default:
 		return nil, fmt.Errorf("unknown generator: %s", c.Generator)
 	}
