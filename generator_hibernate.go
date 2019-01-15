@@ -248,7 +248,7 @@ func (gen *Hibernate) getter(col Column) (string, error) {
 	var ret bytes.Buffer
 	t := gen.convertType(col)
 	if col.Array {
-		t = fmt.Sprintf("List<%s>", t)
+		t = fmt.Sprintf("%s[]", t)
 	}
 	data := map[string]interface{}{
 		"func":       SnakeToUpperCamel(col.Name),
@@ -331,7 +331,7 @@ func (gen *Hibernate) setter(col Column) (string, error) {
 
 	t := gen.convertType(col)
 	if col.Array {
-		t = fmt.Sprintf("List<%s>", t)
+		t = fmt.Sprintf("%s[]", t)
 	}
 	data := map[string]interface{}{
 		"func":       SnakeToUpperCamel(col.Name),
