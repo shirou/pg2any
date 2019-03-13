@@ -73,6 +73,15 @@ func contains(s []string, e string) bool {
 	return false
 }
 
+func partContains(s []string, substring string) bool {
+	for _, a := range s {
+		if strings.Contains(a, substring) {
+			return true
+		}
+	}
+	return false
+}
+
 func filePathJoinRoot(root, file string) string {
 	if filepath.IsAbs(file) {
 		return file
