@@ -73,9 +73,9 @@ func contains(s []string, e string) bool {
 	return false
 }
 
-func partContains(s []string, substring string) bool {
+func partContains(s []string, target string) bool {
 	for _, a := range s {
-		if strings.Contains(a, substring) {
+		if strings.Contains(target, a) {
 			return true
 		}
 	}
