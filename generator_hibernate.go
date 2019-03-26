@@ -322,10 +322,7 @@ func (gen *Hibernate) setter(col Column) (string, error) {
 	}
 
 	var scope = "public"
-	if contains(gen.config.NotInsertableColumns, col.Name) {
-		scope = "private"
-	}
-	if contains(gen.config.NotUpdatableColumns, col.Name) {
+	if contains(gen.config.NotInsertableColumns, col.Name) && contains(gen.config.NotUpdatableColumns, col.Name) {
 		scope = "private"
 	}
 
