@@ -32,7 +32,7 @@ public class {{ .name }}UserType implements UserType {
         }
       }
     }
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("value=" + o + ", columnLabel=" + names[0]);
   }
 
   @Override
