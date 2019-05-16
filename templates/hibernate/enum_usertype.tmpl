@@ -25,11 +25,12 @@ public class {{ .name }}UserType implements UserType {
       ResultSet rs, String[] names, SharedSessionContractImplementor session, Object owner)
       throws HibernateException, SQLException {
     Object o = rs.getObject(names[0]);
-    if (o != null) {
-      for ({{ .name }} enumValue : {{ .name }}.values()) {
-        if (enumValue.getValue().equals(({{ .dt }}) o)) {
-          return enumValue;
-        }
+    if (o == null) {
+      return null;
+    }
+    for ({{ .name }} enumValue : {{ .name }}.values()) {
+      if (enumValue.getValue().equals(({{ .dt }}) o)) {
+        return enumValue;
       }
     }
     throw new UnsupportedOperationException("value=" + o + ", columnLabel=" + names[0]);
