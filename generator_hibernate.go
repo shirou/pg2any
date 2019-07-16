@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -268,6 +269,15 @@ func parseForignTable(src string) (string, string) {
 	return "", ""
 }
 
+var regNextval = regexp.MustCompile(`^nextval\('.+_seq'::regclass\)`)
+
+func isSequence(col Column) bool {
+	if col.PrimaryKey && regNextval.MatchString(col.DefaultValue.String) {
+		return true
+	}
+	return false
+}
+
 func (gen *Hibernate) anotations(col Column) []string {
 	var ret []string
 	if col.PrimaryKey {
@@ -280,7 +290,7 @@ func (gen *Hibernate) anotations(col Column) []string {
 		// a := `@JoinColumns({ @JoinColumn(name="userid", referencedColumnName="id") })`
 		// ret = append(ret, "// ForignTable = "+col.ForignTable.String)
 	}
-	if col.Serial {
+	if col.Serial || isSequence(col) {
 		ret = append(ret, "@GeneratedValue(strategy=GenerationType.IDENTITY)")
 	}
 
