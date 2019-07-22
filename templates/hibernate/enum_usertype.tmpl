@@ -67,7 +67,13 @@ public class {{ .name }}UserType implements UserType {
 
   @Override
   public boolean equals(Object x, Object y) throws HibernateException {
-    return (x == y);
+    if (x == y) {
+      return true;
+    }
+    if (x == null || y == null) {
+      return false;
+    }
+    return java.util.Objects.deepEquals(x, y);
   }
 
   @Override
