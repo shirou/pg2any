@@ -95,11 +95,11 @@ func (gen *Hibernate) Build(ins InspectResult) error {
 
 		fileName := SnakeToUpperCamel(table.Name) + ".java"
 		file, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), fileName))
-		defer file.Close()
 		if err != nil {
 			return errors.Wrap(err, "build create file")
 		}
 		if err := gen.buildTable(file, table); err != nil {
+			file.Close()
 			return errors.Wrap(err, "build write table")
 		}
 
@@ -108,34 +108,40 @@ func (gen *Hibernate) Build(ins InspectResult) error {
 			metaFileName := SnakeToUpperCamel(table.Name) + "_.java"
 			metaFile, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), metaFileName))
 			if err != nil {
+				file.Close()
 				return errors.Wrap(err, "create metamodel file")
 			}
-			defer metaFile.Close()
 			if err := gen.buildMetamodel(metaFile, table); err != nil {
+				file.Close()
+				metaFile.Close()
 				return errors.Wrap(err, "build write metamodel")
 			}
+			metaFile.Close()
 		}
+		file.Close()
 	}
 
 	// Build types
 	for _, typ := range gen.ins.Types {
 		fileName := SnakeToUpperCamel(typ.Name) + ".java"
 		file, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), fileName))
-		defer file.Close()
 		if err != nil {
 			return errors.Wrap(err, "build create file")
 		}
 
 		utFileName := SnakeToUpperCamel(typ.Name) + "UserType.java"
 		utFile, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), utFileName))
-		defer utFile.Close()
 		if err != nil {
+			file.Close()
 			return errors.Wrap(err, "build usertype file")
 		}
 
 		if err := gen.buildType(file, utFile, typ); err != nil {
+			file.Close()
+			utFile.Close()
 			return errors.Wrap(err, "build write type")
 		}
+		file.Close()
 	}
 
 	return nil

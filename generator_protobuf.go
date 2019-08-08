@@ -86,13 +86,14 @@ func (gen *ProtoBuf) Build(ins InspectResult) error {
 		}
 		fileName := SnakeToUpperCamel(table.Name) + "Message.proto"
 		file, err := os.Create(filepath.Join(filePathJoinRoot(gen.root, gen.config.Output), fileName))
-		defer file.Close()
 		if err != nil {
 			return errors.Wrap(err, "build create file")
 		}
 		if err := gen.buildTable(file, table); err != nil {
+			file.Close()
 			return errors.Wrap(err, "build write table")
 		}
+		file.Close()
 	}
 
 	// Build types
