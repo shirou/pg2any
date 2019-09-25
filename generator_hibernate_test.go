@@ -31,3 +31,26 @@ func TestIsSequence(t *testing.T) {
 		t.Errorf("unexpected")
 	}
 }
+
+func TestConvertType(t *testing.T) {
+	h := Hibernate{}
+	ff := [][]string{
+		[]string{"text", "String"},
+		[]string{"int[]", "Integer"},
+		[]string{"bytea", "byte[]"},
+		[]string{"timestamp with time zone", "OffsetDateTime"},
+		[]string{"timestamp(3) with time zone", "OffsetDateTime"},
+		[]string{"numeric(10)", "BigDecimal"},
+		[]string{"character(10)", "String"},
+		[]string{"fooBar", "fooBar"},
+	}
+	for _, d := range ff {
+		col := Column{
+			DataType: d[0],
+		}
+		if actual := h.convertType(col); actual != d[1] {
+			t.Errorf("expected %s, actual: %s", d[0], actual)
+		}
+	}
+
+}

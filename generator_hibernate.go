@@ -453,11 +453,13 @@ func (gen *Hibernate) convertType(col Column) string {
 		return "JsonObject"
 	case "timestamp":
 		return "Timestamp"
-	case "timestamp with time zone", "timestamp without time zone":
-		return "OffsetDateTime"
 	case "boolean":
 		return "boolean"
 	default:
+		// "timestamp with time zone", "timestamp without time zone", "timestamp(n) with time zone"
+		if strings.HasSuffix(t, "time zone") {
+			return "OffsetDateTime"
+		}
 		if strings.HasPrefix(t, "numeric") {
 			return "BigDecimal"
 		}
