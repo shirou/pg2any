@@ -28,6 +28,7 @@ type HibernateConfig struct {
 	NotUpdatableColumns  []string `json:"not_updatable_columns"`
 	IgnoreColumns        []string `json:"ignore_columns"`
 	GenerateMetamodel    bool     `json:"generate_metamodel"`
+	VersionFieldColumn   string   `json:"version_field_column"`
 }
 
 type Hibernate struct {
@@ -313,6 +314,10 @@ func (gen *Hibernate) anotations(col Column) []string {
 	if col.Array {
 		t := strings.Title(gen.convertType(col))
 		ret = append(ret, fmt.Sprintf(`@Type(type = "%sArrayUserType")`, t))
+	}
+
+	if gen.config.VersionFieldColumn == col.Name {
+		ret = append(ret, fmt.Sprintf("@javax.persistence.Version"))
 	}
 
 	column_args := make([]string, 0)
