@@ -194,7 +194,7 @@ func (gen *ProtoBuf) convertType(col Column) string {
 		return array + "int32"
 	case "float":
 		return array + "float"
-	case "double":
+	case "double", "double precision":
 		return array + "double"
 	case "bigint":
 		return array + "int64"

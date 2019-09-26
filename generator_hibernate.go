@@ -433,8 +433,8 @@ func (gen *Hibernate) convertType(col Column) string {
 		return "Integer"
 	case "float":
 		return "Float"
-	case "double":
-		return "double"
+	case "double", "double precision":
+		return "Double"
 	case "bigint":
 		return "Long"
 	case "serial":
