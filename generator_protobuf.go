@@ -213,13 +213,15 @@ func (gen *ProtoBuf) convertType(col Column) string {
 		return array + "int64"
 	case "date":
 		return array + "string"
-	case "timestamp", "timestamp with time zone", "timestamp without time zone":
-		return array + "google.protobuf.Timestamp"
 	case "boolean":
 		return array + "bool"
 	case "json", "jsonb":
 		return array + "map<string, string>"
 	default:
+		// "timestamp with time zone", "timestamp without time zone", "timestamp(n) with time zone"
+		if strings.HasSuffix(col.DataType, "time zone") {
+			return array + "google.protobuf.Timestamp"
+		}
 		if strings.HasPrefix(col.DataType, "numeric") {
 			if gen.config.UseStringToNumeric {
 				return array + "string"
