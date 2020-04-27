@@ -216,8 +216,8 @@ ORDER BY a.attnum`
 		switch c.Constraint.String {
 		case "p":
 			c.PrimaryKey = true
-		case "u":
-			c.Unique = true
+		//case "u":
+		//	c.Unique = true
 		}
 		if c.SerialSrc.Valid {
 			c.Serial = true
