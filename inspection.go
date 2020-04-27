@@ -54,6 +54,7 @@ type Type struct {
 type Index struct {
 	DataType string
 	Name     string
+	Columns  []Column
 	Comment  sql.NullString
 }
 
