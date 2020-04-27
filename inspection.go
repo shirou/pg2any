@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"regexp"
 
 	"github.com/pkg/errors"
 )
@@ -109,6 +110,7 @@ ORDER BY c.relname
 		if err := rows.Scan(&t.DataType, &t.Name, &t.Comment); err != nil {
 			return nil, errors.Wrap(err, "failed to scan of "+t.Name)
 		}
+		t.Indexs, err = getUniqueIndexes(db, schema, t.Name)
 		cols, err := getColumns(db, schema, t.Name, false)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("failed to get columns of %s", t.Name))
@@ -118,6 +120,53 @@ ORDER BY c.relname
 	}
 	return tbs, nil
 }
+
+func getUniqueIndexes(db *sql.DB, schema string, table string) ([]Index, error) {
+	const sqlstr = `SELECT pg_catalog.Pg_get_indexdef(i.indexrelid, 0, true) AS indexdef 
+FROM   pg_catalog.pg_class c, 
+       pg_catalog.pg_class c2, 
+       pg_catalog.pg_namespace n, 
+       pg_catalog.pg_index i 
+       LEFT JOIN pg_catalog.pg_constraint con 
+              ON ( conrelid = i.indrelid 
+                   AND conindid = i.indexrelid 
+                   AND contype IN ( 'p', 'u', 'x' ) ) 
+WHERE  c.oid = i.indrelid 
+       AND i.indexrelid = c2.oid 
+       AND n.oid = c.relnamespace 
+       AND n.nspname = $1
+       AND c.relname = $2
+       AND i.indisunique = true 
+       AND i.indisprimary = false 
+ORDER  BY i.indisprimary DESC, 
+          i.indisunique DESC, 
+          c2.relname`
+
+	q, err := db.Query(sqlstr, schema, table)
+	if err != nil {
+		return nil, errors.Wrap(err, "indexes query")
+	}
+
+	var indexes []Index
+
+	reg := regexp.MustCompile(`.*\(([^\)]+).*`)
+	indexdef := ""
+	// loop: index
+	for q.Next() {
+		err = q.Scan(&indexdef)
+		if err != nil {
+			return nil, errors.Wrap(err, "indexes scan")
+		}
+		var uniqConstraintColumns []Column
+		// loop: column
+		for _, s := range strings.Split(reg.FindStringSubmatch(indexdef)[1], ",") {
+			uniqConstraintColumns = append(uniqConstraintColumns, Column { Name: strings.TrimSpace(s) })
+		}
+		indexes = append(indexes, Index {Columns: uniqConstraintColumns})
+	}
+	return indexes, nil
+}
+
 
 func getColumns(db *sql.DB, schema, table string, sys bool) ([]Column, error) {
 	// https://github.com/xo/xo/blob/master/models/column.xo.go#L21
