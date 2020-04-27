@@ -30,6 +30,17 @@ import com.google.gson.JsonObject;
 @Entity
 @Table(name="{{ .table.Name }}"
     ,schema="public"
+{{ if .table.Indexs}}
+    ,uniqueConstraints = {
+  {{- range .table.Indexs }}
+      @UniqueConstraint(columnNames = {
+    {{- range .Columns }}
+      "{{ .Name }}",
+    {{ end }}
+      }),
+  {{ end }}
+    }
+{{ end }}
 )
 @SuppressWarnings("serial")
 public class {{ .name }} implements java.io.Serializable {
