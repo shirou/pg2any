@@ -454,7 +454,7 @@ func (gen *Hibernate) convertType(col Column) string {
 	case "timestamp":
 		return "Timestamp"
 	case "boolean":
-		return "boolean"
+		return "Boolean"
 	default:
 		// "timestamp with time zone", "timestamp without time zone", "timestamp(n) with time zone"
 		if strings.HasSuffix(t, "time zone") {
