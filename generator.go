@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"regexp"
 )
 
 type Generator interface {
@@ -73,9 +74,10 @@ func contains(s []string, e string) bool {
 	return false
 }
 
-func partContains(s []string, target string) bool {
+func partContainsRegex(s []string, target string) bool {
 	for _, a := range s {
-		if strings.Contains(target, a) {
+		r := regexp.MustCompile(a)
+		if r.MatchString(target) {
 			return true
 		}
 	}
