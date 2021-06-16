@@ -78,7 +78,7 @@ func (gen *Sphinx) Build(ins InspectResult) error {
 
 	// Build tables
 	for _, table := range gen.ins.Tables {
-		if partContains(gen.config.IgnoreTables, table.Name) {
+		if partContainsRegex(gen.config.IgnoreTables, table.Name) {
 			continue
 		}
 		fileName := SnakeToUpperCamel(table.Name) + ".rst"

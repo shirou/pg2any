@@ -11,17 +11,23 @@ func TestSnakeToUpperCamel(t *testing.T) {
 }
 
 func TestPartContains(t *testing.T) {
-	s := []string{"aaa", "bbb", "abcde"}
-	if partContains(s, "a") != false {
+	s := []string{"aaa", "bbb", "abcde", "b$"}
+	if partContainsRegex(s, "a") != false {
 		t.Error("should be false")
 	}
-	if partContains(s, "aaaa") != true {
+	if partContainsRegex(s, "aaaa") != true {
 		t.Error("should be true")
 	}
-	if partContains(s, "cd") != false {
+	if partContainsRegex(s, "cd") != false {
 		t.Error("should be false")
 	}
-	if partContains(s, "bcd") != false {
+	if partContainsRegex(s, "bcd") != false {
 		t.Error("should be false")
+	}
+	if partContainsRegex(s, "abc") != false {
+		t.Error("should be false")
+	}
+	if partContainsRegex(s, "abb") != true {
+		t.Error("should be true")
 	}
 }
